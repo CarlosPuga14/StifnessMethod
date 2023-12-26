@@ -27,7 +27,7 @@ class TStiffLoad:
             * b = distance from the right node
     """
 #%% --------------------------
-#       INITIALISER
+#       INITIALIZER
 # ----------------------------
     _load_type: tuple[str, dict[str, float]] = field(default_factory=tuple)
     _reaction_forces: np.ndarray = field(init=False, default=np.zeros(6))

@@ -30,7 +30,7 @@ class TStiffElement:
         - kel: element stiffness matrix
     """
 #%% --------------------------
-#         INITIALISER
+#         INITIALIZER
 # ----------------------------
     _nodes: list[TStiffNode]
     _mechanical_prop: TStiffMech

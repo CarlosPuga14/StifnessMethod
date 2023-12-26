@@ -15,7 +15,7 @@ class TStiffNode:
         - DoF: node Degrees of Freedom
     """
 #%% --------------------------
-#       INITIALISER
+#       INITIALIZER
 # ----------------------------
     _coordinates: list
     _DoF: list[int]

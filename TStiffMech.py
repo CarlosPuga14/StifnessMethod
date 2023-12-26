@@ -15,7 +15,7 @@ class TStiffMech:
         - G: Shear Modulus (authomaticallu computed)
     """
 #%% --------------------------
-#       INITIALISER
+#       INITIALIZER
 # ----------------------------
     _E: float
     _poisson: float 

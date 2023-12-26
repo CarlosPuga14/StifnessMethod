@@ -21,7 +21,7 @@ class TStiffGeo:
         - In case of Circular, provide the radius size {"radius": value}
     """
 #%% --------------------------
-#       INITIALISER
+#       INITIALIZER
 # ----------------------------
     _section_type: tuple[str, dict[str, float]]
     _area: float = field(init=False)
