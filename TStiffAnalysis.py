@@ -23,11 +23,14 @@ class TStiffAnalysis:
 #       INITIALIZER
 # ----------------------------
     _elements: list[TStiffElement]
+    _nodes_list: list[TStiffNode] = field(init=False, default_factory=list)
+    _number_equations: int = field(init=False, default=0)
     _number_free_equations: int = field(init=False)
-    _number_equations: int = field(init=False)
 
-    def calc_free_equations(self, count: int)-> int:
-        for element in self._elements:
+    def __post_init__(self):
+        self.find_nodes()
+        self.find_equations()
+
 #%% --------------------------
 #       SETTERS & GETTERS
 # ----------------------------
@@ -54,77 +57,75 @@ class TStiffAnalysis:
 #%% --------------------------
 #       CLASS METHODS
 # ----------------------------
+    def find_nodes(self)->None:
         """
         Concatenates every node in the structure, making sure it 
         only appears once
         """
+        for element in self.elements:
             for node in element.nodes:
+                if not any(id(n) == id(node) for n in self.nodes_list):
+                    self.nodes_list.append(node)
+
+    def find_equations(self)->None:
         """
         Find the total number of equations in the system and 
         the number of free equations used to solve the displacements
         """
+        self.calc_free_equations()
+        self.number_free_equations = self.number_equations
+
+        self.calc_constrained_equations()
+
+    def set_node_DoF(self, node:TStiffNode, dof:list[int]):
         """
         Sets the degrees of freedom ('dof') in a given 'node'. 
         """
+        for i in dof:
+            node.DoF[i] = self.number_equations
+            self.number_equations += 1
+
+    def calc_free_equations(self):
             """
             Calculates the number of free equations in the system
             """
+            support_free_equations = {'Free': [0,1,2], 'RollerX': [0,2], 'RollerY': [1,2], 'Pinned': [2]}
+
+            for node in self.nodes_list:
                 if node.support_type == 'Free':
-                    node.DoF[0] = count
-                    node.DoF[1] = count+1
-                    node.DoF[2] = count+2
-                    count += 3
+                    self.set_node_DoF(node, support_free_equations['Free'])
                 
                 elif node.support_type == 'RollerX':
-                    node.DoF[0] = count
-                    node.DoF[2] = count+1
-                    count+=2
+                    self.set_node_DoF(node, support_free_equations['RollerX'])
 
                 elif node.support_type == 'RollerY':
-                    node.DoF[1] = count
-                    node.DoF[2] = count+1
-                    count+=2
+                    self.set_node_DoF(node, support_free_equations['RollerY'])
 
                 elif node.support_type == 'Pinned':
-                    node.DoF[2] = count
-                    count += 1
+                    self.set_node_DoF(node, support_free_equations['Pinned'])
 
                 if node.hinge:
-                    node.DoF[3] = count
-                    count += 1
-            return count
+                    node.DoF[3] = self.number_equations
+                    self.number_equations += 1
 
-    def calc_constrained_equations(self, count: int):
-        for element in self._elements:
-            for node in element.nodes:
+    def calc_constrained_equations(self):
             """
             Calculates the number of constrained equations in the system
             """
+            support_constrained_equations = {'RollerX': [1], 'RollerY': [0], 'Pinned': [0,1], 'Fixed': [0,1,2]}
+
+            for node in self.nodes_list:
                 if node.support_type == 'RollerX':
-                    node.DoF[1] = count
-                    count+=1
+                    self.set_node_DoF(node, support_constrained_equations['RollerX'])
 
                 elif node.support_type == 'RollerY':
-                    node.DoF[0] = count
-                    count+=1
+                    self.set_node_DoF(node, support_constrained_equations['RollerY'])
 
                 elif node.support_type == 'Pinned':
-                    node.DoF[0] = count
-                    node.DoF[1] = count+1
-                    count+=2
+                    self.set_node_DoF(node, support_constrained_equations['Pinned'])
                 
                 elif node.support_type == "Fixed":
-                    node.DoF[0] = count
-                    node.DoF[1] = count+1
-                    node.DoF[2] = count+2
-                    count+=3
-            return count
+                    self.set_node_DoF(node, support_constrained_equations['Fixed'])
 
-    def find_DoF(self):
-        count = 0
-        count = self.calc_free_equations(count)
-
-        self._number_free_equations = count
-        
-        count = self.calc_constrained_equations(count)
-        self._number_equations = count
+    def Run(self)->None:
+        pass
