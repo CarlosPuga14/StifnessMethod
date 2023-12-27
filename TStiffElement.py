@@ -37,12 +37,14 @@ class TStiffElement:
     _geometric_prop: TStiffGeo
     _length: float = field(init=False)
     _angle: float = field(init=False)
-    _fel: np.ndarray = field(init=False, default= np.zeros(6))
-    _kel: np.ndarray = field(init=False, default=np.zeros((6,6)))
+    _fel: np.ndarray = field(init=False)
+    _kel: np.ndarray = field(init=False)
 
     def __post_init__(self):
         self._length = self.Distance()
         self._angle = self.Angle()
+        self._fel = np.zeros(6)
+        self._kel = np.zeros((6,6))
 
 #%% --------------------------
 #         GETTER & SETTER

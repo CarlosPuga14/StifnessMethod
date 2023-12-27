@@ -30,7 +30,7 @@ class TStiffLoad:
 #       INITIALIZER
 # ----------------------------
     _load_type: tuple[str, dict[str, float]] = field(default_factory=tuple)
-    _reaction_forces: np.ndarray = field(init=False, default=np.zeros(6))
+    _reaction_forces: np.ndarray = field(init=False)
 
     def __post_init__(self):
         self._reaction_forces = self.calc_reaction_forces()
