@@ -23,20 +23,24 @@ def main():
     material = TStiffMech(_E = 25e6, _poisson = 0.3)
 
     n1 = TStiffNode(_coordinates= [0,0], _support_type = "Fixed")
-    n2 = TStiffNode(_coordinates = [0,1], _support_type = 'Free')
+    n2 = TStiffNode(_coordinates = [1,0], _support_type = 'Free')
+    n3 = TStiffNode(_coordinates = [2,0], _support_type='Fixed')
+
     n2.is_hinge()
 
     element = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
+    element2 = TStiffElement(_nodes = [n2,n3], _mechanical_prop = material, _geometric_prop = section_rec)
 
     uniform_load = TStiffLoad(_load_type = ("uniform load", {"load": 10, "length": element.length}))
-    nodal_force = TStiffLoad(_load_type = ("nodal force", {"force": 5, "a": 0, "b":element.length}))
 
-    element.Apply_loads([uniform_load, nodal_force])
+    element.Apply_loads([uniform_load])
+    element2.Apply_loads([uniform_load])
 
-    an = TStiffAnalysis([element])
-    an.find_DoF()
+    an = TStiffAnalysis([element, element2])
 
-    print(element)
+    for e in [element, element2]:
+        print(e.nodes)
+
     print(an)
 
 if __name__ == "__main__":
