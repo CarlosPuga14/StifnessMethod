@@ -31,6 +31,26 @@ class TStiffAnalysis:
 #%% --------------------------
 #       SETTERS & GETTERS
 # ----------------------------
+    @property
+    def elements(self): return self._elements
+    @elements.setter
+    def elements(self, elements: list[TStiffElement]): self._elements = elements
+
+    @property
+    def nodes_list(self): return self._nodes_list
+    @nodes_list.setter
+    def nodes_list(self, nodes: list[TStiffNode]): self._nodes_list = nodes
+
+    @property
+    def number_equations(self): return self._number_equations
+    @number_equations.setter
+    def number_equations(self, n_equations): self._number_equations = n_equations
+
+    @property
+    def number_free_equations(self): return self._number_free_equations
+    @number_free_equations.setter
+    def number_free_equations(self, free_equations): self._number_free_equations = free_equations
+
 #%% --------------------------
 #       CLASS METHODS
 # ----------------------------
