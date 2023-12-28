@@ -26,10 +26,17 @@ class TStiffAnalysis:
     _nodes_list: list[TStiffNode] = field(init=False, default_factory=list)
     _number_equations: int = field(init=False, default=0)
     _number_free_equations: int = field(init=False)
+    _FG: np.ndarray = field(init=False)
+    _UG: np.ndarray = field(init=False)
+    _KG: np.ndarray = field(init=False)
 
     def __post_init__(self):
         self.find_nodes()
         self.find_equations()
+        self.FG = np.zeros(self.number_equations)
+        self.UG = np.zeros_like(self.FG)
+        self.KG = np.zeros((self.number_equations, self.number_equations))
+        
 
 #%% --------------------------
 #       SETTERS & GETTERS
@@ -53,6 +60,21 @@ class TStiffAnalysis:
     def number_free_equations(self): return self._number_free_equations
     @number_free_equations.setter
     def number_free_equations(self, free_equations): self._number_free_equations = free_equations
+
+    @property
+    def FG(self): return self._FG
+    @FG.setter
+    def FG(self, fg): self._FG = fg
+
+    @property
+    def UG(self): return self._UG
+    @UG.setter
+    def UG(self, ug): self._UG = ug
+
+    @property
+    def KG(self): return self._KG
+    @KG.setter
+    def KG(self, kg): self._KG = kg
 
 #%% --------------------------
 #       CLASS METHODS
