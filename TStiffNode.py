@@ -3,6 +3,8 @@
 # ----------------------------
 from dataclasses import dataclass, field
 import numpy as np
+from tpanic import DebugStop
+from dataclasses import dataclass, field
 
 @dataclass
 class TStiffNode:
@@ -20,6 +22,8 @@ class TStiffNode:
             * 'Fixed': constrains all degrees of freedom
         - hinge: set the node as a hinge
         - DoF: node Degrees of Freedom
+        - springs: list contaning informations about nodal prescribed springs. 
+        - displacement: list containing information about nodal prescribed displacement. 
     """
 #%% --------------------------
 #       INITIALIZER
@@ -28,24 +32,25 @@ class TStiffNode:
     _support_type: str = "Free"
     _hinge: bool = field(init=False, default=False)
     _DoF: list[int] = field(init=False, default_factory=list)
+    _springs: list[tuple[str, float]] = field(init=False, default_factory=list)
+    _nodal_displacement: list[tuple[str, float]] = field(init=False, default_factory=list)
 
     def __post_init__(self):
         self._coordinates = np.array(self._coordinates)
         self._DoF = [np.nan for _ in range(3)]
  
-
 #%% --------------------------
 #       GETETRS & SETTERS
 # ----------------------------
     @property
     def coordinates(self): return self._coordinates
     @coordinates.setter
-    def coordinates(self, coordinates): self.coordinates = coordinates
+    def coordinates(self, coordinates): self._coordinates = coordinates
         
     @property
     def support_type(self): return self._support_type
     @support_type.setter
-    def support_type(self, support): self.support_type = support
+    def support_type(self, support): self._support_type = support
 
     @property
     def hinge(self): return self._hinge
@@ -55,7 +60,17 @@ class TStiffNode:
     @property
     def DoF(self): return self._DoF
     @DoF.setter
-    def DoF(self, DoF): self.DoF = DoF
+    def DoF(self, DoF): self._DoF = DoF
+
+    @property
+    def springs(self): return self._springs
+    @springs.setter
+    def springs(self, spring): self._springs = spring
+
+    @property
+    def nodal_displacement(self): return self._nodal_displacement
+    @nodal_displacement.setter
+    def nodal_displacement(self, disp): self._nodal_displacement = disp
 
 #%% --------------------------
 #       CLASS METHODS
@@ -63,3 +78,45 @@ class TStiffNode:
     def is_hinge(self):
         self.hinge = True
         self.DoF.append(np.nan)
+
+    def prescribed_displacement(self, displacements:list[tuple[str, float]]):
+        """
+        Stores and prescribes a displacement to a node.
+
+        Currently available:
+            - 'Xdisp': prescribed displacement in the x direction
+            - 'Ydisp': prescribed displacement in the y direction
+            - 'Rot': prescribed rotation
+        """
+        check_support = {'Free': [], 'RollerX': ['Ydisp'], 'RollerY': ['Xdisp'], 
+                         'Pinned': ['Xdisp','Ydisp'], 'Fixed': ['Xdisp','Ydisp','Rot']}
+        
+        for item in displacements:
+            disp_type, value = item
+
+            if  disp_type in check_support[self.support_type]:
+                self.nodal_displacement.append((disp_type, value))
+            else:
+                print(f"ERROR: You cannot prescribed a {disp_type} displacement to a {self.support_type} support")
+                DebugStop()
+
+    def prescribed_spring(self, springs: list[tuple[str, float]]):
+        """
+        Sotres and prescribes springs to the node.
+
+        Currently available:
+            - 'TransX': tranlational spring in the x direction
+            - 'TransY': tranlational spring in the y direction
+            - 'Rot': rotational spring 
+        """
+        check_spring = {'Free': ['TransX', 'TransY', 'Rot'], 'RollerX': ['TransX', 'Rot'], 
+                        'RollerY':['TransY', 'Rot'], 'Pinned': ['Rot'], 'Fixed': []}
+
+        for item in springs:
+            spring_type, value = item
+
+            if spring_type in check_spring[self.support_type]:
+                self.springs.append((spring_type, value))
+            else:
+                print(f"ERROR: You cannot prescribed a {spring_type} spring to a {self.support_type} support")
+                DebugStop()

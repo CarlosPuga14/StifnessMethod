@@ -148,6 +148,28 @@ class TStiffAnalysis:
                 
                 elif node.support_type == "Fixed":
                     self.set_node_DoF(node, support_constrained_equations['Fixed'])
+  
+    def check_for_prescribed_displacements(self):
+        disp_to_DoF = {'Xdisp': 0, 'Ydisp': 1, 'Rot': 2}
+        
+        for node in self.nodes_list:
+            for disp in node.nodal_displacement:
+                disp_type, value = disp
+
+                dof = node.DoF[disp_to_DoF[disp_type]]
+                self.UG[dof] += value
+
+    def check_for_prescribed_springs(self):
+        spring_to_DoF = {'TransX': 0, 'TransY': 1, 'Rot': 2}
+        index = 0
+
+        for node in self.nodes_list:
+            for spring in node.springs:
+                spring_type, value = spring
+
+                dof = spring_to_DoF[spring_type] if index == 0 else spring_to_DoF[spring_type]+3
+                self.KG[dof, dof] += value
+            index += 1
 
     def Run(self)->None:
         pass
