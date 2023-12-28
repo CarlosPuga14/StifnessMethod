@@ -24,7 +24,7 @@ class TStiffAnalysis:
 #       INITIALIZER
 # ----------------------------
     _elements: list[TStiffElement]
-    _nodes_list: list[TStiffNode] = field(init=False, default_factory=list)
+    _nodes_list: list[TStiffNode] = field(init=False, repr=False, default_factory=list)
     _number_equations: int = field(init=False, default=0)
     _number_free_equations: int = field(init=False)
     _FG: np.ndarray = field(init=False)
@@ -178,6 +178,38 @@ class TStiffAnalysis:
             for j, dof_j in enumerate(dof_list):
                 self.KG[dof_i, dof_j] += element.kel[i, j]
 
+    def find_element_solution(self):
+        for e in self.elements:
+            equations = e.get_element_equations()
+
+            for i, equation in enumerate(equations):
+                e.uel[i] += self.UG[equation]
+            
+            e.solution = np.dot(e.kel, e.uel) + e.fel
+
+    def print_results(self):
+        def print_vector(vector):
+            end = ', '
+            for i, value in enumerate(vector):
+                if i == len(vector)-1:
+                    end = '\n'
+                print(f"{value:.2e}", end=end)
+
+        print(f"{'='*15} ELEMENT RESULTS {'='*15}")
+
+        for e in self.elements:
+            print(f"Index: {e.index}")
+
+            print(f"Displacement:", end=' ')
+            print_vector(e.uel)
+
+            print(f"Load Vector:", end=' ')
+            print_vector(e.fel)
+
+            print(f"Solution:", end=' ')
+            print_vector(e.solution)
+
+            print(f"{'-'*21} *** {'-'*21}")
 
     def Run(self)->None:
         self.check_for_prescribed_displacements()
@@ -191,12 +223,9 @@ class TStiffAnalysis:
         self.check_for_prescribed_springs()
 
         K00 = self.KG[:self.number_free_equations, :self.number_free_equations]
-        K10 = self.KG[self.number_free_equations:, :self.number_free_equations]
         F0 = self.FG[:self.number_free_equations]
         
         u0 = np.dot(np.linalg.inv(K00), -F0)
+        self.UG[:self.number_free_equations] += u0
 
-        f1 = K10@u0 + self.FG[self.number_free_equations:]
-
-        print(f"u0 = {u0}")
-        print(f"f1 = {f1}")
+        self.find_element_solution()

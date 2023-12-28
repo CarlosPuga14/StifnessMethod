@@ -47,6 +47,7 @@ class TStiffElement:
     _uel: np.ndarray = field(init=False)
     _kel: np.ndarray = field(init=False)
     _rotation_matrix: np.ndarray = field(init=False)
+    _solution: np.ndarray = field(init=False)
 
     def __post_init__(self):
         self.length = self.Distance()
@@ -56,6 +57,7 @@ class TStiffElement:
         self.uel = np.zeros_like(self.fel)
         self.rotation_matrix = np.zeros((6,6))
         self.kel = np.zeros_like(self.rotation_matrix)
+        self._solution = np.zeros(6)
 
 #%% --------------------------
 #         GETTER & SETTER
@@ -109,6 +111,11 @@ class TStiffElement:
     def index(self): return self._index
     @index.setter
     def index(self, i): self._index = i
+
+    @property
+    def solution(self): return self._solution
+    @solution.setter
+    def solution(self, sol): self._solution = sol
 
 #%% --------------------------
 #        CLASS METHODS
