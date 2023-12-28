@@ -1,9 +1,9 @@
 #%% --------------------------
 #       IMPORTED MODULES
 # ----------------------------
-import sys
 import numpy as np
 from dataclasses import dataclass, field
+from tpanic import DebugStop
 from TStiffNode import TStiffNode
 from TStiffMech import TStiffMech
 from TStiffGeo import TStiffGeo
@@ -19,15 +19,17 @@ class TStiffElement:
     in an element.
 
     Provide:
-        - nodes: list of element nodes
-        - mechanical_prop: element mechanical properties
-        - geometric_prop: element geometric properties
+        - 'nodes': list of element nodes
+        - 'mechanical_prop': element mechanical properties
+        - 'geometric_prop': element geometric properties
         
     Computed:
-        - length: element length
-        - angle: element inclination angle
-        - fel: element load vector
-        - kel: element stiffness matrix
+        - 'length': element length
+        - 'angle': element inclination angle
+        - 'fel': element load vector
+        - 'uel': element displacement vector
+        - 'kel': element stiffness matrix
+        - 'rotation_matrix': element roational matrix
     """
 #%% --------------------------
 #         INITIALIZER
@@ -38,13 +40,17 @@ class TStiffElement:
     _length: float = field(init=False)
     _angle: float = field(init=False)
     _fel: np.ndarray = field(init=False)
+    _uel: np.ndarray = field(init=False)
     _kel: np.ndarray = field(init=False)
+    _rotation_matrix: np.ndarray = field(init=False)
 
     def __post_init__(self):
-        self._length = self.Distance()
-        self._angle = self.Angle()
-        self._fel = np.zeros(6)
-        self._kel = np.zeros((6,6))
+        self.length = self.Distance()
+        self.angle = self.Angle()
+        self.fel = np.zeros(6)
+        self.uel = np.zeros_like(self.fel)
+        self.rotation_matrix = np.zeros((6,6))
+        self.kel = np.zeros_like(self.rotation_matrix)
 
 #%% --------------------------
 #         GETTER & SETTER
@@ -67,12 +73,12 @@ class TStiffElement:
     @property
     def length(self): return self._length
     @length.setter
-    def length(self, length): self._length = length
+    def length(self, l): self._length = l
         
     @property
     def angle(self): return self._angle
     @angle.setter
-    def angle(self, angle): self._angle = angle
+    def angle(self, theta): self._angle = theta
 
     @property
     def fel(self): return self._fel
@@ -80,9 +86,19 @@ class TStiffElement:
     def fel(self, load_vector): self._fel = load_vector
 
     @property
+    def uel(self): return self._uel
+    @uel.setter
+    def uel(self, displacement): self._uel = displacement
+
+    @property
     def kel(self): return self._kel
     @kel.setter
-    def kel(self, stiffness_matrix): self._kel = stiffness_matrix
+    def kel(self, stiff_mat): self._kel = stiff_mat
+    
+    @property
+    def rotation_matrix(self): return self._rotation_matrix
+    @rotation_matrix.setter
+    def rotation_matrix(self, rotation): self._rotation_matrix = rotation
 
 #%% --------------------------
 #        CLASS METHODS
@@ -126,6 +142,53 @@ class TStiffElement:
         for load in load_vector:
             if not self.check_values(load):
                 print("ERROR: Load term inconsistent")
-                sys.exit()
-
+                DebugStop()
+                
             self.fel += load.reaction_forces
+
+    def rotate(self):
+        """
+        Evaluates the element rotational matrix 
+        """
+
+        lx = np.cos(self.angle)
+        ly = np.sin(self.angle)
+
+        self.rotation_matrix = np.array([
+            [lx, ly, 0, 0, 0, 0], 
+            [-ly, lx, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0],
+            [0, 0, 0, lx, ly, 0], 
+            [0, 0, 0, -ly, lx, 0],
+            [0, 0, 0, 0, 0, 1]
+        ])
+
+    def calc_stiff(self):
+        """
+        Evaluates the element stiffness matrix
+        """
+        EA = self.mechanical_prop.E*self.geometric_prop.area
+        EI = self.mechanical_prop.E*self.geometric_prop.inertia
+        l = self.length
+
+        truss_stiffness = np.array([
+            [EA/l, 0, 0, -EA/l, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [-EA/l, 0, 0, EA/l, 0, 0],
+            [0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0]
+        ])  
+
+        beam_stiffness = np.array([
+            [0, 0, 0, 0, 0, 0],
+            [0, 12*EI/l**3, 6*EI/l**2, 0, -12*EI/l**3, 6*EI/l**2],
+            [0, 6*EI/l**2, 4*EI/l, 0, -6*EI/l**2, 2*EI/l],
+            [0, 0, 0, 0, 0, 0],
+            [0, -12*EI/l**3, -6*EI/l**2, 0, 12*EI/l**3, -6*EI/l**2],
+            [0, 6*EI/l**2, 2*EI/l, 0, -6*EI/l**2, 4*EI/l]
+        ])
+
+        kloc = truss_stiffness + beam_stiffness
+
+        self.kel = np.transpose(self.rotation_matrix)@kloc@self.rotation_matrix
