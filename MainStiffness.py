@@ -17,31 +17,29 @@ from TStiffAnalysis import TStiffAnalysis
 #%% --------------------------
 #         MAIN FUNCTION
 # ----------------------------
-def main():
+def main()->int:
     section_rec = TStiffGeo(_section_type = ("Rectangle", {"base": 10, "height": 10}))
 
     material = TStiffMech(_E = 25e6, _poisson = 0.3)
 
-    n1 = TStiffNode(_coordinates= [0,0], _support_type = "Fixed")
-    n2 = TStiffNode(_coordinates = [1,0], _support_type = 'Free')
-    n3 = TStiffNode(_coordinates = [2,0], _support_type='Fixed')
+    n1 = TStiffNode(_coordinates= [0,0], _support_type = "Pinned")
+    n2 = TStiffNode(_coordinates = [1,0], _support_type = 'RollerX')
 
-    n2.is_hinge()
+    n1.prescribed_spring([('Rot', 1e10)])
+    n2.prescribed_spring([('TransX', 1e6)])
 
     element = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
-    element2 = TStiffElement(_nodes = [n2,n3], _mechanical_prop = material, _geometric_prop = section_rec)
 
     uniform_load = TStiffLoad(_load_type = ("uniform load", {"load": 10, "length": element.length}))
 
     element.Apply_loads([uniform_load])
-    element2.Apply_loads([uniform_load])
 
-    an = TStiffAnalysis([element, element2])
-
-    for e in [element, element2]:
-        print(e.nodes)
+    an = TStiffAnalysis([element])
+    an.Run()
 
     print(an)
+
+    return 0
 
 if __name__ == "__main__":
     main()

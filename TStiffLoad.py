@@ -1,8 +1,8 @@
 #%% --------------------------
 #       IMPORTED MODULES
 # ----------------------------
-import sys
 import numpy as np
+from tpanic import DebugStop
 from dataclasses import dataclass, field
 
 @dataclass
@@ -71,4 +71,4 @@ class TStiffLoad:
             return np.array([0, P*b**2*(3*a+b)/l**3, P*a*b**2/l**2, 0, P*a**2*(a+3*b)/l**3, -P*a**2*b/l**2])
         else:
             print(f"ERROR: load type not defined ({load_type})")
-            sys.exit()
+            DebugStop()

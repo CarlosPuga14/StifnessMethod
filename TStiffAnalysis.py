@@ -4,6 +4,7 @@
 from dataclasses import dataclass, field 
 from TStiffElement import TStiffElement
 from TStiffNode import TStiffNode
+import numpy as np 
 
 @dataclass
 class TStiffAnalysis:
@@ -170,6 +171,30 @@ class TStiffAnalysis:
                 dof = spring_to_DoF[spring_type] if index == 0 else spring_to_DoF[spring_type]+3
                 self.KG[dof, dof] += value
             index += 1
+   
+    def assemble(self, element):
+        pass
+
+    def get_free_equations(self)->np.ndarray:
+        pass
+
+    def get_constrained_equations(self)->np.ndarray:
+        pass
 
     def Run(self)->None:
-        pass
+        self.check_for_prescribed_displacements()
+
+        for element in self.elements:
+            element.rotate()
+            element.calc_stiff()
+
+            self.assemble(element)
+
+        self.check_for_prescribed_springs()
+
+        # K00, F0 = self.get_free_equations()
+        # K10, F1 = self.get_constrained_equations()
+
+        # U0 = np.linalg.solve(K00, F0)
+
+        # support_reaction_forces = K10@U0 + F1
