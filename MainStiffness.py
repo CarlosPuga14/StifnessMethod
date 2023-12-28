@@ -25,8 +25,7 @@ def main()->int:
     n1 = TStiffNode(_coordinates= [0,0], _support_type = "Pinned")
     n2 = TStiffNode(_coordinates = [1,0], _support_type = 'RollerX')
 
-    n1.prescribed_spring([('Rot', 1e10)])
-    n2.prescribed_spring([('TransX', 1e6)])
+    n2.prescribed_spring([('Rot', 1e20)])
 
     element = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
 

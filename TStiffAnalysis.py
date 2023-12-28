@@ -168,17 +168,12 @@ class TStiffAnalysis:
             for spring in node.springs:
                 spring_type, value = spring
 
-                dof = spring_to_DoF[spring_type] if index == 0 else spring_to_DoF[spring_type]+3
+                dof = node.DoF[spring_to_DoF[spring_type]]
                 self.KG[dof, dof] += value
+
             index += 1
    
-    def assemble(self, element):
-        pass
-
-    def get_free_equations(self)->np.ndarray:
-        pass
-
-    def get_constrained_equations(self)->np.ndarray:
+    def assemble(self, element:TStiffElement):
         pass
 
     def Run(self)->None:
