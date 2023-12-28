@@ -3,6 +3,7 @@
 # ----------------------------
 import numpy as np
 from dataclasses import dataclass, field
+from typing import ClassVar
 from tpanic import DebugStop
 from TStiffNode import TStiffNode
 from TStiffMech import TStiffMech
@@ -34,9 +35,12 @@ class TStiffElement:
 #%% --------------------------
 #         INITIALIZER
 # ----------------------------
+    counter: ClassVar[int] = 0
+
     _nodes: list[TStiffNode]
     _mechanical_prop: TStiffMech
     _geometric_prop: TStiffGeo
+    _index: int = field(init=False)
     _length: float = field(init=False)
     _angle: float = field(init=False)
     _fel: np.ndarray = field(init=False)
@@ -47,6 +51,7 @@ class TStiffElement:
     def __post_init__(self):
         self.length = self.Distance()
         self.angle = self.Angle()
+        self.element_index()
         self.fel = np.zeros(6)
         self.uel = np.zeros_like(self.fel)
         self.rotation_matrix = np.zeros((6,6))
@@ -100,9 +105,22 @@ class TStiffElement:
     @rotation_matrix.setter
     def rotation_matrix(self, rotation): self._rotation_matrix = rotation
 
+    @property
+    def index(self): return self._index
+    @index.setter
+    def index(self, i): self._index = i
+
 #%% --------------------------
 #        CLASS METHODS
 # ----------------------------
+    @classmethod
+    def increment_counter(cls):
+        cls.counter += 1
+        
+    def element_index(self):
+        self.index = self.counter
+        TStiffElement.increment_counter()
+
     def Distance(self)->float:
         """
         Calculates the euclidean norm between two points
@@ -145,6 +163,20 @@ class TStiffElement:
                 DebugStop()
                 
             self.fel += load.reaction_forces
+
+    def get_element_equations(self)->list[int]:
+        index = 0
+        dof_list = []
+        for node in self.nodes:
+            if node.hinge and index == 1:
+                dof_list += node.DoF[:3]
+            elif node.hinge and index == 0:
+                dof_list += node.DoF[:2] + [node.DoF[3]]
+            else:
+                dof_list += node.DoF
+            index+=1
+
+        return dof_list
 
     def rotate(self):
         """

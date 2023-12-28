@@ -2,6 +2,7 @@
 #       IMPORTED MODULES
 # ----------------------------
 import numpy as np
+from typing import ClassVar
 from tpanic import DebugStop
 from dataclasses import dataclass, field
 
@@ -27,8 +28,11 @@ class TStiffNode:
 #%% --------------------------
 #       INITIALIZER
 # ----------------------------
+    counter: ClassVar[int] = 0
+
     _coordinates: list
     _support_type: str = "Free"
+    _index: int = field(init=False)
     _hinge: bool = field(init=False, default=False)
     _DoF: list[int] = field(init=False, default_factory=list)
     _springs: list[tuple[str, float]] = field(init=False, default_factory=list)
@@ -36,6 +40,7 @@ class TStiffNode:
 
     def __post_init__(self):
         self._coordinates = np.array(self._coordinates)
+        self.node_index()
         self._DoF = [np.nan for _ in range(3)]
  
 #%% --------------------------
@@ -71,9 +76,22 @@ class TStiffNode:
     @nodal_displacement.setter
     def nodal_displacement(self, disp): self._nodal_displacement = disp
 
+    @property
+    def index(self): return self._index
+    @index.setter
+    def index(self, i): self._index = i
+
 #%% --------------------------
 #       CLASS METHODS
 # ----------------------------
+    @classmethod
+    def increment_counter(cls):
+        cls.counter += 1
+        
+    def node_index(self):
+        self.index = self.counter
+        TStiffNode.increment_counter()
+
     def is_hinge(self):
         self.hinge = True
         self.DoF.append(np.nan)
