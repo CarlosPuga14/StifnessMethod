@@ -76,7 +76,6 @@ class TStiffAnalysis:
     def KG(self): return self._KG
     @KG.setter
     def KG(self, kg): self._KG = kg
-
 #%% --------------------------
 #       CLASS METHODS
 # ----------------------------
@@ -87,7 +86,7 @@ class TStiffAnalysis:
         """
         for element in self.elements:
             for node in element.nodes:
-                if not any(id(n) == id(node) for n in self.nodes_list):
+                if not any(n.index == node.index for n in self.nodes_list):
                     self.nodes_list.append(node)
 
     def find_equations(self)->None:
@@ -162,7 +161,6 @@ class TStiffAnalysis:
 
     def check_for_prescribed_springs(self):
         spring_to_DoF = {'TransX': 0, 'TransY': 1, 'Rot': 2}
-        index = 0
 
         for node in self.nodes_list:
             for spring in node.springs:
@@ -170,11 +168,16 @@ class TStiffAnalysis:
 
                 dof = node.DoF[spring_to_DoF[spring_type]]
                 self.KG[dof, dof] += value
-
-            index += 1
    
     def assemble(self, element:TStiffElement):
-        pass
+        dof_list = element.get_element_equations()
+
+        for i, dof_i in enumerate(dof_list):
+            self.FG[dof_i] += element.fel[i]
+
+            for j, dof_j in enumerate(dof_list):
+                self.KG[dof_i, dof_j] += element.kel[i, j]
+
 
     def Run(self)->None:
         self.check_for_prescribed_displacements()
@@ -187,9 +190,13 @@ class TStiffAnalysis:
 
         self.check_for_prescribed_springs()
 
-        # K00, F0 = self.get_free_equations()
-        # K10, F1 = self.get_constrained_equations()
+        K00 = self.KG[:self.number_free_equations, :self.number_free_equations]
+        K10 = self.KG[self.number_free_equations:, :self.number_free_equations]
+        F0 = self.FG[:self.number_free_equations]
+        
+        u0 = np.dot(np.linalg.inv(K00), -F0)
 
-        # U0 = np.linalg.solve(K00, F0)
+        f1 = K10@u0 + self.FG[self.number_free_equations:]
 
-        # support_reaction_forces = K10@U0 + F1
+        print(f"u0 = {u0}")
+        print(f"f1 = {f1}")
