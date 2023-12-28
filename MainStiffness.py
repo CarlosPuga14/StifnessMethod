@@ -18,19 +18,38 @@ from TStiffAnalysis import TStiffAnalysis
 #         MAIN FUNCTION
 # ----------------------------
 def main()->int:
+    truss = True
+
     section_rec = TStiffGeo(_section_type = ("Rectangle", {"base": 0.222223, "height": 0.6}))
     material = TStiffMech(_E = 25e6, _poisson = 0.3) 
 
     n1 = TStiffNode(_coordinates= [0,0], _support_type = 'Pinned')
     n2 = TStiffNode(_coordinates = [1,0], _support_type = 'Pinned')
 
-    element = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
+    if truss:
+        n3 = TStiffNode(_coordinates = [0,1], _support_type = 'Free')
 
-    uniform_load = TStiffLoad(_load_type = ("uniform load", {"load": 10, "length": element.length}))
+        n1.is_hinge()
+        n2.is_hinge()
+        n3.is_hinge()
 
-    element.Apply_loads([uniform_load])
+        element = TStiffElement(_nodes = [n1,n3], _mechanical_prop = material, _geometric_prop = section_rec)
+        element2 = TStiffElement(_nodes = [n3,n2], _mechanical_prop = material, _geometric_prop = section_rec)
+        element3 = TStiffElement(_nodes = [n2,n1], _mechanical_prop = material, _geometric_prop = section_rec)
+        nodal_force = TStiffLoad(_load_type = ('nodal force', {'force': -10, 'a':element.length, 'b':0}))
+        
+        element.Apply_loads([nodal_force])
+        
+        structure = [element,element2,element3]
 
-    structure = [element]
+    else:
+        element = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
+
+        uniform_load = TStiffLoad(_load_type=('uniform load', {'load':-10, 'length': element.length}))
+
+        element.Apply_loads([uniform_load])
+
+        structure = [element]
 
     an = TStiffAnalysis(structure)
     an.Run()

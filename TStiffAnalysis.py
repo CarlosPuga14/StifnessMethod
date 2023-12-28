@@ -185,7 +185,7 @@ class TStiffAnalysis:
             for i, equation in enumerate(equations):
                 e.uel[i] += self.UG[equation]
             
-            e.solution = np.dot(e.kel, e.uel) + e.fel
+            e.solution = np.dot(e.kel, e.uel) - e.fel
 
     def print_results(self):
         def print_vector(vector):
@@ -200,11 +200,11 @@ class TStiffAnalysis:
         for e in self.elements:
             print(f"Index: {e.index}")
 
-            print(f"Displacement:", end=' ')
-            print_vector(e.uel)
-
             print(f"Load Vector:", end=' ')
             print_vector(e.fel)
+            
+            print(f"Displacement:", end=' ')
+            print_vector(e.uel)
 
             print(f"Solution:", end=' ')
             print_vector(e.solution)
@@ -225,7 +225,7 @@ class TStiffAnalysis:
         K00 = self.KG[:self.number_free_equations, :self.number_free_equations]
         F0 = self.FG[:self.number_free_equations]
         
-        u0 = np.dot(np.linalg.inv(K00), -F0)
+        u0 = np.dot(np.linalg.inv(K00), F0)
         self.UG[:self.number_free_equations] += u0
 
         self.find_element_solution()
