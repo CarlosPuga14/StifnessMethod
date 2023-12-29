@@ -19,6 +19,7 @@ from TStiffAnalysis import TStiffAnalysis
 # ----------------------------
 def main()->int:
     truss = True
+    file_name = 'results.txt'
 
     section_rec = TStiffGeo(_section_type = ("Rectangle", {"base": 0.222223, "height": 0.6}))
     material = TStiffMech(_E = 25e6, _poisson = 0.3) 
@@ -54,7 +55,7 @@ def main()->int:
     an = TStiffAnalysis(structure)
 
     an.Run()
-    an.Results(['info', 'kel', 'uel'])
+    an.Results(['fel', 'uel', 'sol'], file_name)
 
     return 0
 

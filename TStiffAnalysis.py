@@ -207,8 +207,8 @@ class TStiffAnalysis:
 
     def Results(self, variables: list[str], file: str = None)->None:
         """
-        Prints simulation results and 
-        element data
+        Prompts simulation results and element data (user's choice). 
+        Results can also be saved in a .txt 'file'. 
 
         Options available:
             - 'info': element data
@@ -296,12 +296,12 @@ class TStiffAnalysis:
 
                 nprint(f"{'-'*21} *** {'-'*21}")
 
-        def curry(func, f): return lambda text, e='\n': func(text, file=f, end=e)
+        def curry_print(func, f): return lambda text, e='\n': func(text, end=e, file=f)
         
         if file:
             with open(file, 'w') as f:
-                nprint = curry(print, f)
+                nprint = curry_print(print, f)
                 print_reults(f)
         else:
-            nprint = curry(print, file)
+            nprint = curry_print(print, file)
             print_reults(file)
