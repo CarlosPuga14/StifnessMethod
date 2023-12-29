@@ -186,30 +186,6 @@ class TStiffAnalysis:
             
             e.solution = np.dot(e.kel, e.uel) - e.fel
 
-    def print_results(self):
-        def print_vector(vector):
-            end = ', '
-            for i, value in enumerate(vector):
-                if i == len(vector)-1:
-                    end = '\n'
-                print(f"{value:.2e}", end=end)
-
-        print(f"{'='*15} ELEMENT RESULTS {'='*15}")
-
-        for e in self.elements:
-            print(f"Index: {e.index}")
-
-            print(f"Load Vector:", end=' ')
-            print_vector(e.fel)
-            
-            print(f"Displacement:", end=' ')
-            print_vector(e.uel)
-
-            print(f"Solution:", end=' ')
-            print_vector(e.solution)
-
-            print(f"{'-'*21} *** {'-'*21}")
-
     def Run(self)->None:
         self.check_for_prescribed_displacements()
 
@@ -228,3 +204,104 @@ class TStiffAnalysis:
         self.UG[:self.number_free_equations] += u0
 
         self.find_element_solution()
+
+    def Results(self, variables: list[str], file: str = None)->None:
+        """
+        Prints simulation results and 
+        element data
+
+        Options available:
+            - 'info': element data
+            - 'fel': element load vector
+            - 'uel': element displacements
+            - 'kel': element stiffness matrix
+            - 'rot': element rotation matrix
+            - 'sol': element reaction forces
+        """
+        def print_vector(vector, notation=1):
+            end = ', '
+            for i, value in enumerate(vector):
+                if i == len(vector)-1:
+                    end = '\n'
+                if notation:
+                    nprint(f"{value:.2e}", e=end)
+                else:
+                    nprint(f"{value}", e=end)
+        
+        def print_matrix(matrix, notation=1):
+            for row in (matrix):
+                end = ', '
+                for j, col in enumerate(row):
+                    if j == len(row)-1:
+                        end = '\n'
+                    if notation: 
+                        nprint(f"{col:.2e}", e=end)
+                    else:
+                        nprint(f"{col}", e=end)
+        
+        def print_reults(file):
+            nprint(f"{'='*15} ELEMENT RESULTS {'='*15}")
+
+            for e in self.elements:
+                nprint(f"* Index: {e.index}")
+                nprint('')
+
+                if 'info' in variables:
+                    nprint("* Nodes Coordinates: ")
+                    nprint(f"\tNode 1:", e=' ')
+                    print_vector(e.nodes[0].coordinates, notation=0)
+                    nprint(f"\tNode 2:", e=' ')
+                    print_vector(e.nodes[1].coordinates, notation=0)
+                    nprint('')
+
+                    nprint("* Mechanical Properties: ")
+                    nprint(f"\tYoung Modulus: {e.mechanical_prop.E}")
+                    nprint(f"\tPoisson Ratio: {e.mechanical_prop.poisson}")
+                    nprint('')
+
+                    nprint("* Geometric Properties: ")
+                    nprint(f"\tArea: {e.geometric_prop.area}")
+                    nprint(f"\tInertia: {e.geometric_prop.inertia}")
+                    nprint(f"\tLength: {e.length:.2f}")
+                    nprint(f"\tInclination: {np.rad2deg(e.angle):.2f}°")
+                    nprint('')
+
+                    nprint("* Degrees of Freedom:", e=' ')
+                    print_vector(e.equations, notation=0)
+                    nprint('')
+                    
+                if 'fel' in variables:
+                    nprint(f"* Load Vector:", e=' ')
+                    print_vector(e.fel)
+                    nprint('')
+                
+                if 'uel' in variables:
+                    nprint(f"* Displacement:", e=' ')
+                    print_vector(e.uel)
+                    nprint('')
+
+                if 'kel' in variables:
+                    nprint("* Stiffness Matrix: ")
+                    print_matrix(e.kel)
+                    nprint('')
+
+                if 'rot' in variables:
+                    nprint("* Rotation Matrix: ")
+                    print_matrix(e.rotation_matrix)
+
+                if 'sol'in variables:
+                    nprint(f"* Solution:", e=' ')
+                    print_vector(e.solution)
+                    nprint('')
+
+                nprint(f"{'-'*21} *** {'-'*21}")
+
+        def curry(func, f): return lambda text, e='\n': func(text, file=f, end=e)
+        
+        if file:
+            with open(file, 'w') as f:
+                nprint = curry(print, f)
+                print_reults(f)
+        else:
+            nprint = curry(print, file)
+            print_reults(file)

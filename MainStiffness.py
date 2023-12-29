@@ -54,7 +54,7 @@ def main()->int:
     an = TStiffAnalysis(structure)
 
     an.Run()
-    an.print_results()
+    an.Results(['info', 'kel', 'uel'])
 
     return 0
 
