@@ -127,8 +127,9 @@ class TStiffAnalysis:
                     self.set_node_DoF(node, support_free_equations['Pinned'])
 
                 if node.hinge:
-                    node.DoF[3] = self.number_equations
-                    self.number_equations += 1
+                    for _ in range(node.number_of_connections-1):
+                        node.DoF.append(self.number_equations)
+                        self.number_equations += 1
 
     def calc_constrained_equations(self):
             """
@@ -170,19 +171,17 @@ class TStiffAnalysis:
                 self.KG[dof, dof] += value
    
     def assemble(self, element:TStiffElement):
-        dof_list = element.get_element_equations()
+        element.get_element_equations()
 
-        for i, dof_i in enumerate(dof_list):
+        for i, dof_i in enumerate(element.equations):
             self.FG[dof_i] += element.fel[i]
 
-            for j, dof_j in enumerate(dof_list):
+            for j, dof_j in enumerate(element.equations):
                 self.KG[dof_i, dof_j] += element.kel[i, j]
 
     def find_element_solution(self):
         for e in self.elements:
-            equations = e.get_element_equations()
-
-            for i, equation in enumerate(equations):
+            for i, equation in enumerate(e.equations):
                 e.uel[i] += self.UG[equation]
             
             e.solution = np.dot(e.kel, e.uel) - e.fel

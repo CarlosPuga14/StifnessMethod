@@ -34,6 +34,8 @@ class TStiffNode:
     _support_type: str = "Free"
     _index: int = field(init=False)
     _hinge: bool = field(init=False, default=False)
+    _number_of_connections: int = field(init=False, default=0)
+    _connects: list = field(init=False, default_factory=list)
     _DoF: list[int] = field(init=False, default_factory=list)
     _springs: list[tuple[str, float]] = field(init=False, default_factory=list)
     _nodal_displacement: list[tuple[str, float]] = field(init=False, default_factory=list)
@@ -81,6 +83,16 @@ class TStiffNode:
     @index.setter
     def index(self, i): self._index = i
 
+    @property
+    def connects(self): return self._connects
+    @connects.setter
+    def connects(self, c): self._connects = c
+
+    @property
+    def number_of_connections(self): return self._number_of_connections
+    @number_of_connections.setter
+    def number_of_connections(self, n): self._number_of_connections = n
+
 #%% --------------------------
 #       CLASS METHODS
 # ----------------------------
@@ -94,7 +106,6 @@ class TStiffNode:
 
     def is_hinge(self):
         self.hinge = True
-        self.DoF.append(np.nan)
 
     def prescribed_displacement(self, displacements:list[tuple[str, float]]):
         """

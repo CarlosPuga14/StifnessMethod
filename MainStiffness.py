@@ -35,7 +35,7 @@ def main()->int:
 
         element = TStiffElement(_nodes = [n1,n3], _mechanical_prop = material, _geometric_prop = section_rec)
         element2 = TStiffElement(_nodes = [n3,n2], _mechanical_prop = material, _geometric_prop = section_rec)
-        element3 = TStiffElement(_nodes = [n2,n1], _mechanical_prop = material, _geometric_prop = section_rec)
+        element3 = TStiffElement(_nodes = [n1,n2], _mechanical_prop = material, _geometric_prop = section_rec)
         nodal_force = TStiffLoad(_load_type = ('nodal force', {'force': -10, 'a':element.length, 'b':0}))
         
         element.Apply_loads([nodal_force])
@@ -52,6 +52,7 @@ def main()->int:
         structure = [element]
 
     an = TStiffAnalysis(structure)
+
     an.Run()
     an.print_results()
 

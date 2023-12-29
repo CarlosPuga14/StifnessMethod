@@ -43,6 +43,7 @@ class TStiffElement:
     _index: int = field(init=False)
     _length: float = field(init=False)
     _angle: float = field(init=False)
+    _equations: list = field(init=False, default_factory=list)
     _fel: np.ndarray = field(init=False)
     _uel: np.ndarray = field(init=False)
     _kel: np.ndarray = field(init=False)
@@ -58,6 +59,8 @@ class TStiffElement:
         self.rotation_matrix = np.zeros((6,6))
         self.kel = np.zeros_like(self.rotation_matrix)
         self._solution = np.zeros(6)
+
+        self.node_connects()
 
 #%% --------------------------
 #         GETTER & SETTER
@@ -117,6 +120,11 @@ class TStiffElement:
     @solution.setter
     def solution(self, sol): self._solution = sol
 
+    @property
+    def equations(self): return self._equations
+    @equations.setter
+    def equations(self, eq): self._equations = eq
+
 #%% --------------------------
 #        CLASS METHODS
 # ----------------------------
@@ -127,6 +135,11 @@ class TStiffElement:
     def element_index(self):
         self.index = self.counter
         TStiffElement.increment_counter()
+
+    def node_connects(self):
+        for node in self.nodes:
+            node.connects.append((node.number_of_connections, self.index))
+            node.number_of_connections += 1
 
     def Distance(self)->float:
         """
@@ -172,18 +185,18 @@ class TStiffElement:
             self.fel += load.reaction_forces
 
     def get_element_equations(self)->list[int]:
-        index = 0
-        dof_list = []
         for node in self.nodes:
-            if node.hinge and index == 1:
-                dof_list += node.DoF[:3]
-            elif node.hinge and index == 0:
-                dof_list += node.DoF[:2] + [node.DoF[3]]
-            else:
-                dof_list += node.DoF
-            index+=1
+            if not node.hinge:
+                self.equations += (node.DoF)
+            
+            elif node.hinge:
+                for connect in node.connects:
+                    i, element_i = connect
 
-        return dof_list
+                    if self.index == element_i:
+                        self.equations += (node.DoF[:2])
+                        self.equations.append(node.DoF[i+2])
+                        break
 
     def rotate(self):
         """
